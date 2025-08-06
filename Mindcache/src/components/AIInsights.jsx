@@ -12,16 +12,117 @@ const AIInsights = () => {
 
   const loadInsights = async () => {
     try {
+      setLoading(true);
+
+      // First try to load from backend
+      try {
+        const response = await fetch("http://localhost:5000/api/insights");
+        if (response.ok) {
+          const backendInsights = await response.json();
+          console.log("Backend insights loaded:", backendInsights);
+
+          // Convert backend format to component format
+          const formattedInsights = [
+            {
+              id: Date.now(),
+              type: "backend_analysis",
+              content_analysis: {
+                sentiment: {
+                  polarity:
+                    backendInsights.sentiment_analysis?.average_sentiment || 0,
+                  subjectivity: 0.5,
+                },
+                topics: backendInsights.content_analysis?.top_topics || [],
+                complexity:
+                  backendInsights.content_analysis?.complexity_score || 0,
+              },
+              behavior_analysis: {
+                engagement_level:
+                  backendInsights.behavior_patterns?.engagement_score || 0,
+                reading_speed:
+                  backendInsights.behavior_patterns?.reading_speed || 0,
+                focus_time:
+                  backendInsights.behavior_patterns?.focus_duration || 0,
+              },
+              patterns: backendInsights.behavior_patterns || {},
+              timestamp: new Date().toISOString(),
+            },
+          ];
+
+          setInsights(formattedInsights);
+          generateStats(formattedInsights);
+          setLoading(false);
+          return;
+        }
+      } catch (backendError) {
+        console.log(
+          "Backend not available, loading from local storage:",
+          backendError.message
+        );
+      }
+
+      // Fallback to Chrome storage
       const result = await chrome.storage.local.get(["ai_insights"]);
       const aiInsights = result.ai_insights || [];
 
-      setInsights(aiInsights.slice(-10)); // Show last 10 insights
-      generateStats(aiInsights);
+      if (aiInsights.length === 0) {
+        // Generate sample insights if none exist
+        const sampleInsights = generateSampleInsights();
+        setInsights(sampleInsights);
+        generateStats(sampleInsights);
+      } else {
+        setInsights(aiInsights.slice(-10)); // Show last 10 insights
+        generateStats(aiInsights);
+      }
     } catch (error) {
       console.error("Error loading insights:", error);
+      // Generate sample insights as fallback
+      const sampleInsights = generateSampleInsights();
+      setInsights(sampleInsights);
+      generateStats(sampleInsights);
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateSampleInsights = () => {
+    const now = new Date();
+    return [
+      {
+        id: 1,
+        type: "reading_pattern",
+        content_analysis: {
+          sentiment: { polarity: 0.3, subjectivity: 0.6 },
+          topics: ["technology", "productivity", "learning"],
+          complexity: 0.7,
+        },
+        behavior_analysis: {
+          engagement_level: 0.8,
+          reading_speed: 250,
+          focus_time: 15.5,
+        },
+        timestamp: now.toISOString(),
+        message:
+          "You show high engagement with technical content and tend to spend more time on complex articles.",
+      },
+      {
+        id: 2,
+        type: "content_preference",
+        content_analysis: {
+          sentiment: { polarity: 0.1, subjectivity: 0.4 },
+          topics: ["development", "tools", "tutorials"],
+          complexity: 0.8,
+        },
+        behavior_analysis: {
+          engagement_level: 0.9,
+          reading_speed: 200,
+          focus_time: 22.3,
+        },
+        timestamp: new Date(now.getTime() - 3600000).toISOString(),
+        message:
+          "Your reading patterns suggest a preference for in-depth technical tutorials and development content.",
+      },
+    ];
   };
 
   const generateStats = (insightsData) => {

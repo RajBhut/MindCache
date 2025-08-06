@@ -6,14 +6,19 @@ import {
   Settings,
   Brain,
   Highlighter,
+  Globe,
+  Zap,
+  TrendingUp,
 } from "lucide-react";
 
 const Navigation = () => {
   const navItems = [
     { to: "/dashboard", label: "Dashboard", icon: BarChart3 },
     { to: "/mindcache", label: "MindCache", icon: Highlighter },
-    { to: "/interactions", label: "Interactions", icon: List },
-    { to: "/summaries", label: "Summaries", icon: FileText },
+    { to: "/html-scraper", label: "Scraper", icon: Globe },
+    { to: "/collections", label: "Collections", icon: Zap },
+    { to: "/analytics", label: "Analytics", icon: TrendingUp },
+    { to: "/interactions", label: "Activity", icon: List },
     { to: "/ai-insights", label: "AI Insights", icon: Brain },
     { to: "/settings", label: "Settings", icon: Settings },
   ];

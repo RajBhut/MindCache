@@ -788,227 +788,564 @@
       };
     }
 
-    // Enhanced Focus Mode
-    if (!window.MindCacheFocusMode) {
-      class MindCacheFocusMode {
+    // Simple Floating Indicator for Current Page MindCache Data
+    if (!window.MindCacheFloatingIndicator) {
+      class MindCacheFloatingIndicator {
         constructor() {
-          this.isActive = false;
-          this.originalStyles = new Map();
-          this.focusButton = null;
-          this.readingProgress = null;
+          this.domain = window.location.hostname;
+          this.indicator = null;
           this.init();
         }
 
         init() {
-          this.createFocusButton();
-          this.createReadingProgress();
-          this.setupKeyboardShortcuts();
+          this.createIndicator();
+          this.updateCounts();
+
+          // Update counts when data changes
+          setInterval(() => this.updateCounts(), 3000);
+
+          // Show on page load briefly
+          setTimeout(() => this.showBriefly(), 2000);
         }
 
-        createFocusButton() {
-          this.focusButton = document.createElement("div");
-          this.focusButton.className = "mindcache-focus-toggle";
-          this.focusButton.innerHTML = "🎯";
-          this.focusButton.title = "Toggle Focus Mode (Ctrl+Shift+F)";
+        createIndicator() {
+          this.indicator = document.createElement("div");
+          this.indicator.className = "mindcache-floating-indicator";
 
-          Object.assign(this.focusButton.style, {
+          Object.assign(this.indicator.style, {
             position: "fixed",
-            top: "80px",
-            right: "20px",
-            width: "50px",
-            height: "50px",
-            borderRadius: "50%",
-            background: "linear-gradient(135deg, #4a5568 0%, #2d3748 100%)",
-            border: "2px solid rgba(255,255,255,0.1)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "20px",
-            cursor: "pointer",
-            zIndex: "9998",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-            transition: "all 0.3s ease",
-            backdropFilter: "blur(10px)",
-          });
-
-          this.focusButton.addEventListener("click", () => this.toggle());
-          document.body.appendChild(this.focusButton);
-        }
-
-        createReadingProgress() {
-          this.readingProgress = document.createElement("div");
-          this.readingProgress.className = "mindcache-reading-progress";
-
-          Object.assign(this.readingProgress.style, {
-            position: "fixed",
-            top: "0",
-            left: "0",
-            width: "0%",
-            height: "3px",
-            background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
-            zIndex: "9999",
-            transition: "width 0.3s ease",
-            display: "none",
-          });
-
-          document.body.appendChild(this.readingProgress);
-
-          window.addEventListener("scroll", () => {
-            if (this.isActive) {
-              this.updateReadingProgress();
-            }
-          });
-        }
-
-        updateReadingProgress() {
-          const scrollTop = window.pageYOffset;
-          const docHeight =
-            document.documentElement.scrollHeight - window.innerHeight;
-          const scrollPercent = (scrollTop / docHeight) * 100;
-          this.readingProgress.style.width = Math.min(scrollPercent, 100) + "%";
-        }
-
-        setupKeyboardShortcuts() {
-          document.addEventListener("keydown", (e) => {
-            if (e.ctrlKey && e.shiftKey && e.key === "F") {
-              e.preventDefault();
-              this.toggle();
-            }
-            // ESC to exit focus mode
-            if (e.key === "Escape" && this.isActive) {
-              this.deactivate();
-            }
-          });
-        }
-
-        toggle() {
-          if (this.isActive) {
-            this.deactivate();
-          } else {
-            this.activate();
-          }
-        }
-
-        activate() {
-          this.isActive = true;
-          this.focusButton.innerHTML = "👁️";
-          this.focusButton.style.background =
-            "linear-gradient(135deg, #63b3ed 0%, #4299e1 100%)";
-          this.readingProgress.style.display = "block";
-          this.updateReadingProgress();
-
-          // Apply focus styles
-          const style = document.createElement("style");
-          style.id = "mindcache-focus-mode-styles";
-          style.textContent = `
-            body {
-              background: #1a202c !important;
-              color: #e2e8f0 !important;
-            }
-            
-            * {
-              transition: all 0.3s ease !important;
-            }
-            
-            body > *:not(.mindcache-focus-toggle):not(.mindcache-selection-toolbar):not(.mindcache-enhanced-note-dialog):not(.mindcache-activity-indicator):not(.mindcache-reading-progress) {
-              opacity: 0.4 !important;
-              filter: blur(1px) grayscale(0.3) !important;
-            }
-            
-            .mindcache-highlighted-text,
-            .mindcache-highlighted-text *,
-            *:has(.mindcache-highlighted-text) {
-              opacity: 1 !important;
-              filter: none !important;
-              box-shadow: 0 0 20px rgba(255, 235, 59, 0.5) !important;
-            }
-
-            p:hover, h1:hover, h2:hover, h3:hover, h4:hover, h5:hover, h6:hover,
-            article:hover, section:hover, div:hover, blockquote:hover {
-              opacity: 1 !important;
-              filter: none !important;
-              background: rgba(102, 126, 234, 0.1) !important;
-              border-radius: 6px !important;
-              padding: 8px !important;
-              box-shadow: 0 4px 20px rgba(102, 126, 234, 0.2) !important;
-            }
-
-            /* Hide distracting elements */
-            nav, header, footer, .sidebar, .ads, .advertisement, 
-            .social-share, .comments, .related-articles {
-              opacity: 0.1 !important;
-              filter: blur(3px) !important;
-            }
-
-            /* Enhance main content */
-            main, article, .content, .post-content, .article-content {
-              opacity: 1 !important;
-              filter: none !important;
-              max-width: 800px !important;
-              margin: 0 auto !important;
-              padding: 40px 20px !important;
-              background: rgba(255,255,255,0.02) !important;
-              border-radius: 12px !important;
-            }
-          `;
-          document.head.appendChild(style);
-
-          // Show toast
-          this.showToast("🎯 Focus Mode Activated - Press ESC to exit", 3000);
-        }
-
-        deactivate() {
-          this.isActive = false;
-          this.focusButton.innerHTML = "🎯";
-          this.focusButton.style.background =
-            "linear-gradient(135deg, #4a5568 0%, #2d3748 100%)";
-          this.readingProgress.style.display = "none";
-
-          const focusStyles = document.getElementById(
-            "mindcache-focus-mode-styles"
-          );
-          if (focusStyles) {
-            focusStyles.remove();
-          }
-
-          this.showToast("👁️ Focus Mode Deactivated", 2000);
-        }
-
-        showToast(message, duration = 3000) {
-          const toast = document.createElement("div");
-          toast.textContent = message;
-
-          Object.assign(toast.style, {
-            position: "fixed",
-            top: "20px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "linear-gradient(135deg, #4a5568 0%, #2d3748 100%)",
+            bottom: "20px",
+            left: "20px",
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
             color: "white",
-            padding: "12px 24px",
-            borderRadius: "25px",
-            zIndex: "10001",
+            padding: "8px 12px",
+            borderRadius: "20px",
+            fontSize: "12px",
+            fontWeight: "500",
             boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+            zIndex: "9999",
+            cursor: "pointer",
+            transition: "all 0.3s ease",
+            opacity: "0",
+            transform: "translateY(10px)",
             backdropFilter: "blur(10px)",
             border: "1px solid rgba(255,255,255,0.1)",
-            fontSize: "14px",
-            fontWeight: "500",
-            animation: "slideInToast 0.3s ease forwards",
           });
 
-          document.body.appendChild(toast);
+          this.indicator.addEventListener("click", () => {
+            // Show extension popup or current page data summary
+            if (window.MindCacheActivityTracker) {
+              window.MindCacheActivityTracker.showSiteData();
+            } else {
+              console.log("Activity tracker not loaded");
+            }
+          });
+
+          this.indicator.addEventListener("mouseenter", () => {
+            this.indicator.style.transform = "translateY(0) scale(1.05)";
+            this.indicator.style.opacity = "1";
+          });
+
+          this.indicator.addEventListener("mouseleave", () => {
+            this.indicator.style.transform = "translateY(0) scale(1)";
+            setTimeout(() => {
+              this.indicator.style.opacity = "0.4";
+            }, 1000);
+          });
+
+          document.body.appendChild(this.indicator);
+        }
+
+        updateCounts() {
+          const highlights = JSON.parse(
+            localStorage.getItem("mindcache-highlights") || "[]"
+          );
+          const notes = JSON.parse(
+            localStorage.getItem("mindcache-notes") || "[]"
+          );
+          const quotes = JSON.parse(
+            localStorage.getItem("mindcache-quotes") || "[]"
+          );
+
+          const domainHighlights = highlights.filter(
+            (h) => h.domain === this.domain
+          );
+          const domainNotes = notes.filter((n) => n.domain === this.domain);
+          const domainQuotes = quotes.filter((q) => q.domain === this.domain);
+
+          const total =
+            domainHighlights.length + domainNotes.length + domainQuotes.length;
+
+          if (total === 0) {
+            this.indicator.style.display = "none";
+            return;
+          }
+
+          this.indicator.style.display = "block";
+          this.indicator.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span>📚</span>
+              <span>${total}</span>
+              <span style="font-size: 10px; opacity: 0.8;">items</span>
+            </div>
+          `;
+        }
+
+        showBriefly() {
+          this.indicator.style.opacity = "0.8";
+          this.indicator.style.transform = "translateY(0)";
 
           setTimeout(() => {
-            toast.style.animation = "slideOutToast 0.3s ease forwards";
-            setTimeout(() => toast.remove(), 300);
-          }, duration);
+            this.indicator.style.opacity = "0.4";
+          }, 4000);
         }
       }
 
-      window.MindCacheFocusMode = new MindCacheFocusMode();
+      window.MindCacheFloatingIndicator = new MindCacheFloatingIndicator();
     }
 
-    // Site Activity Tracker
+    // Enhanced Activity Tracker with Meaningful Interactions
+    if (!window.MindCacheActivityTracker) {
+      class MindCacheActivityTracker {
+        constructor() {
+          this.activities = [];
+          this.interactions = [];
+          this.readingTime = 0;
+          this.scrollBehavior = {
+            totalScrolled: 0,
+            meaningfulScrolls: 0,
+            scrollDirection: "down",
+            lastScrollY: 0,
+          };
+          this.clickPatterns = {
+            totalClicks: 0,
+            meaningfulClicks: 0,
+            clickTypes: {},
+          };
+          this.lastActivity = Date.now();
+          this.sessionStart = Date.now();
+          this.init();
+        }
+
+        init() {
+          this.setupEventListeners();
+          this.startTracking();
+          this.setupPeriodicSave();
+        }
+
+        setupEventListeners() {
+          // Meaningful scroll tracking
+          let scrollTimeout;
+          document.addEventListener("scroll", () => {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(
+              () => this.handleMeaningfulScroll(),
+              150
+            );
+          });
+
+          // Meaningful click tracking
+          document.addEventListener(
+            "click",
+            this.handleMeaningfulClick.bind(this),
+            true
+          );
+
+          // Text selection tracking
+          document.addEventListener(
+            "selectionchange",
+            this.handleTextSelection.bind(this)
+          );
+
+          // Reading time tracking
+          document.addEventListener(
+            "visibilitychange",
+            this.handleVisibilityChange.bind(this)
+          );
+
+          // Hover patterns for content engagement
+          document.addEventListener(
+            "mousemove",
+            this.handleMouseMovement.bind(this)
+          );
+
+          // Keyboard interactions
+          document.addEventListener(
+            "keydown",
+            this.handleKeyInteraction.bind(this)
+          );
+
+          // Focus tracking on input elements
+          document.addEventListener(
+            "focusin",
+            this.handleElementFocus.bind(this)
+          );
+        }
+
+        handleMeaningfulScroll() {
+          const currentScrollY = window.scrollY;
+          const scrollDelta = Math.abs(
+            currentScrollY - this.scrollBehavior.lastScrollY
+          );
+
+          // Only count meaningful scrolls (more than 100px)
+          if (scrollDelta > 100) {
+            this.scrollBehavior.meaningfulScrolls++;
+            this.scrollBehavior.totalScrolled += scrollDelta;
+            this.scrollBehavior.scrollDirection =
+              currentScrollY > this.scrollBehavior.lastScrollY ? "down" : "up";
+
+            this.recordActivity("meaningful_scroll", {
+              scrollY: currentScrollY,
+              scrollDelta: scrollDelta,
+              direction: this.scrollBehavior.scrollDirection,
+              timestamp: Date.now(),
+            });
+          }
+
+          this.scrollBehavior.lastScrollY = currentScrollY;
+        }
+
+        handleMeaningfulClick(e) {
+          this.clickPatterns.totalClicks++;
+
+          const target = e.target;
+          const tagName = target.tagName.toLowerCase();
+          const isContentClick = this.isContentElement(target);
+          const hasText =
+            target.textContent && target.textContent.trim().length > 0;
+
+          // Count as meaningful if it's on content, links, buttons, or interactive elements
+          if (
+            isContentClick ||
+            ["a", "button", "input", "select", "textarea"].includes(tagName)
+          ) {
+            this.clickPatterns.meaningfulClicks++;
+
+            // Track click types
+            this.clickPatterns.clickTypes[tagName] =
+              (this.clickPatterns.clickTypes[tagName] || 0) + 1;
+
+            this.recordActivity("meaningful_click", {
+              element: tagName,
+              hasText: hasText,
+              textContent: hasText ? target.textContent.substring(0, 50) : "",
+              className: target.className,
+              isContentClick: isContentClick,
+              timestamp: Date.now(),
+            });
+          }
+        }
+
+        handleTextSelection() {
+          const selection = window.getSelection();
+          const selectedText = selection.toString().trim();
+
+          if (selectedText && selectedText.length > 10) {
+            this.recordActivity("text_selection", {
+              selectedText: selectedText.substring(0, 100),
+              selectionLength: selectedText.length,
+              timestamp: Date.now(),
+            });
+          }
+        }
+
+        handleVisibilityChange() {
+          if (document.hidden) {
+            this.recordActivity("page_blur", {
+              sessionDuration: Date.now() - this.sessionStart,
+              timestamp: Date.now(),
+            });
+          } else {
+            this.recordActivity("page_focus", { timestamp: Date.now() });
+            this.sessionStart = Date.now(); // Reset session on return
+          }
+        }
+
+        handleMouseMovement(e) {
+          // Track hover over content elements (throttled)
+          if (!this.lastHoverTrack || Date.now() - this.lastHoverTrack > 2000) {
+            const target = e.target;
+            if (this.isContentElement(target)) {
+              this.recordActivity("content_hover", {
+                element: target.tagName.toLowerCase(),
+                hasText:
+                  target.textContent && target.textContent.trim().length > 0,
+                timestamp: Date.now(),
+              });
+              this.lastHoverTrack = Date.now();
+            }
+          }
+        }
+
+        handleKeyInteraction(e) {
+          // Track meaningful keyboard interactions
+          const meaningfulKeys = [
+            "ArrowDown",
+            "ArrowUp",
+            "PageDown",
+            "PageUp",
+            "Home",
+            "End",
+            "Space",
+          ];
+
+          if (meaningfulKeys.includes(e.key)) {
+            this.recordActivity("navigation_key", {
+              key: e.key,
+              timestamp: Date.now(),
+            });
+          }
+
+          // Track search/typing patterns
+          if (e.ctrlKey && e.key === "f") {
+            this.recordActivity("search_initiated", { timestamp: Date.now() });
+          }
+        }
+
+        handleElementFocus(e) {
+          const target = e.target;
+          if (
+            ["input", "textarea", "select"].includes(
+              target.tagName.toLowerCase()
+            )
+          ) {
+            this.recordActivity("form_interaction", {
+              element: target.tagName.toLowerCase(),
+              inputType: target.type || "text",
+              timestamp: Date.now(),
+            });
+          }
+        }
+
+        isContentElement(element) {
+          const contentTags = [
+            "p",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "article",
+            "section",
+            "div",
+            "span",
+            "blockquote",
+            "li",
+          ];
+          const tagName = element.tagName.toLowerCase();
+
+          return (
+            contentTags.includes(tagName) &&
+            element.textContent &&
+            element.textContent.trim().length > 20
+          );
+        }
+
+        recordActivity(type, data) {
+          const activity = {
+            type,
+            data,
+            url: window.location.href,
+            domain: window.location.hostname,
+            timestamp: Date.now(),
+          };
+
+          this.activities.push(activity);
+          this.lastActivity = Date.now();
+
+          // Keep only last 200 activities
+          if (this.activities.length > 200) {
+            this.activities = this.activities.slice(-200);
+          }
+        }
+
+        setupPeriodicSave() {
+          // Save activity data every 30 seconds
+          setInterval(() => {
+            this.saveActivityData();
+          }, 30000);
+
+          // Save on page unload
+          window.addEventListener("beforeunload", () => {
+            this.saveActivityData();
+          });
+        }
+
+        saveActivityData() {
+          const activityData = {
+            activities: this.activities,
+            scrollBehavior: this.scrollBehavior,
+            clickPatterns: this.clickPatterns,
+            sessionDuration: Date.now() - this.sessionStart,
+            lastUpdate: Date.now(),
+            domain: window.location.hostname,
+          };
+
+          localStorage.setItem(
+            `mindcache-activity-${window.location.hostname}`,
+            JSON.stringify(activityData)
+          );
+        }
+
+        startTracking() {
+          // Record page visit with enhanced data
+          this.recordActivity("page_visit", {
+            url: window.location.href,
+            title: document.title,
+            timestamp: Date.now(),
+            userAgent: navigator.userAgent.substring(0, 100),
+          });
+        }
+
+        getActivitySummary() {
+          const sessionDuration = Date.now() - this.sessionStart;
+
+          return {
+            totalActivities: this.activities.length,
+            meaningfulScrolls: this.scrollBehavior.meaningfulScrolls,
+            meaningfulClicks: this.clickPatterns.meaningfulClicks,
+            totalScrolled: this.scrollBehavior.totalScrolled,
+            sessionDuration: sessionDuration,
+            lastActivity: this.lastActivity,
+            clickTypes: this.clickPatterns.clickTypes,
+            engagementScore: this.calculateEngagementScore(),
+            activities: this.activities.slice(-20), // Return last 20 for preview
+          };
+        }
+
+        calculateEngagementScore() {
+          const sessionMinutes = (Date.now() - this.sessionStart) / 60000;
+          const scrollScore =
+            Math.min(this.scrollBehavior.meaningfulScrolls / 10, 1) * 25;
+          const clickScore =
+            Math.min(this.clickPatterns.meaningfulClicks / 5, 1) * 25;
+          const timeScore = Math.min(sessionMinutes / 5, 1) * 25;
+          const interactionScore =
+            Math.min(this.activities.length / 50, 1) * 25;
+
+          return Math.round(
+            scrollScore + clickScore + timeScore + interactionScore
+          );
+        }
+
+        showSiteData() {
+          // This method will be called by the floating indicator
+          const highlights = JSON.parse(
+            localStorage.getItem("mindcache-highlights") || "[]"
+          );
+          const notes = JSON.parse(
+            localStorage.getItem("mindcache-notes") || "[]"
+          );
+          const quotes = JSON.parse(
+            localStorage.getItem("mindcache-quotes") || "[]"
+          );
+
+          const domainHighlights = highlights.filter(
+            (h) => h.domain === window.location.hostname
+          );
+          const domainNotes = notes.filter(
+            (n) => n.domain === window.location.hostname
+          );
+          const domainQuotes = quotes.filter(
+            (q) => q.domain === window.location.hostname
+          );
+
+          // Create modal to show data
+          this.createDataModal(domainHighlights, domainNotes, domainQuotes);
+        }
+
+        createDataModal(highlights, notes, quotes) {
+          const modal = document.createElement("div");
+          modal.className = "mindcache-data-modal";
+
+          Object.assign(modal.style, {
+            position: "fixed",
+            top: "0",
+            left: "0",
+            width: "100%",
+            height: "100%",
+            background: "rgba(0,0,0,0.8)",
+            zIndex: "10000",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          });
+
+          const content = document.createElement("div");
+          Object.assign(content.style, {
+            background: "white",
+            borderRadius: "12px",
+            padding: "24px",
+            maxWidth: "600px",
+            maxHeight: "80vh",
+            overflowY: "auto",
+            position: "relative",
+          });
+
+          const activitySummary = this.getActivitySummary();
+
+          content.innerHTML = `
+            <h3 style="margin: 0 0 20px 0; color: #2d3748;">MindCache Data - ${
+              window.location.hostname
+            }</h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">
+              <div style="text-align: center; padding: 12px; background: #f7fafc; border-radius: 8px;">
+                <div style="font-size: 24px; font-weight: bold; color: #667eea;">${
+                  highlights.length
+                }</div>
+                <div style="font-size: 12px; color: #718096;">Highlights</div>
+              </div>
+              <div style="text-align: center; padding: 12px; background: #f7fafc; border-radius: 8px;">
+                <div style="font-size: 24px; font-weight: bold; color: #764ba2;">${
+                  notes.length
+                }</div>
+                <div style="font-size: 12px; color: #718096;">Notes</div>
+              </div>
+              <div style="text-align: center; padding: 12px; background: #f7fafc; border-radius: 8px;">
+                <div style="font-size: 24px; font-weight: bold; color: #48bb78;">${
+                  quotes.length
+                }</div>
+                <div style="font-size: 12px; color: #718096;">Quotes</div>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+              <h4 style="margin: 0 0 10px 0; color: #4a5568;">Session Activity</h4>
+              <div style="background: #f7fafc; padding: 12px; border-radius: 8px; font-size: 14px;">
+                <div>Meaningful Scrolls: <strong>${
+                  activitySummary.meaningfulScrolls
+                }</strong></div>
+                <div>Meaningful Clicks: <strong>${
+                  activitySummary.meaningfulClicks
+                }</strong></div>
+                <div>Engagement Score: <strong>${
+                  activitySummary.engagementScore
+                }%</strong></div>
+                <div>Session Duration: <strong>${Math.round(
+                  activitySummary.sessionDuration / 60000
+                )}m</strong></div>
+              </div>
+            </div>
+
+            <button style="position: absolute; top: 12px; right: 12px; background: none; border: none; font-size: 20px; cursor: pointer;" onclick="this.parentElement.parentElement.remove()">×</button>
+          `;
+
+          modal.appendChild(content);
+          document.body.appendChild(modal);
+
+          modal.addEventListener("click", (e) => {
+            if (e.target === modal) modal.remove();
+          });
+        }
+      }
+
+      window.MindCacheActivityTracker = new MindCacheActivityTracker();
+    }
+
+    // Site Activity Tracker (Legacy support)
     if (!window.MindCacheSiteTracker) {
       class MindCacheSiteTracker {
         constructor() {

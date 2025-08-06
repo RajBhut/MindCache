@@ -9,6 +9,10 @@ import useStore from "./store/useStore";
 import Dashboard from "./components/Dashboard";
 import InteractionsList from "./components/InteractionsList";
 import MindCacheView from "./components/MindCacheView";
+import HTMLScraper from "./components/HTMLScraper";
+import SmartCollection from "./components/SmartCollection";
+import AIAnalyticsDashboard from "./components/AIAnalyticsDashboard";
+import Activity from "./components/Activity";
 import SummariesView from "./components/SummariesView";
 import AIInsights from "./components/AIInsights";
 import Settings from "./components/Settings";
@@ -62,6 +66,10 @@ function App() {
               />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/mindcache" element={<MindCacheView />} />
+              <Route path="/html-scraper" element={<HTMLScraper />} />
+              <Route path="/collections" element={<SmartCollection />} />
+              <Route path="/analytics" element={<AIAnalyticsDashboard />} />
+              <Route path="/activity" element={<Activity />} />
               <Route path="/interactions" element={<InteractionsList />} />
               <Route path="/summaries" element={<SummariesView />} />
               <Route path="/ai-insights" element={<AIInsights />} />
