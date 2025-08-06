@@ -1020,6 +1020,7 @@
         init() {
           this.createActivityIndicator();
           this.updateActivityCount();
+          this.setupKeyboardShortcuts();
 
           // Update count when data changes
           setInterval(() => this.updateActivityCount(), 2000);
@@ -1080,6 +1081,21 @@
               ${domainHighlights.length}🖍️ ${domainNotes.length}💭 ${domainQuotes.length}💾
             </div>
           `;
+        }
+
+        setupKeyboardShortcuts() {
+          document.addEventListener("keydown", (e) => {
+            // Ctrl+Shift+M to show bottom popup
+            if (e.ctrlKey && e.shiftKey && e.key === "M") {
+              e.preventDefault();
+              this.showBottomPopup();
+            }
+            // Ctrl+Shift+D to show detailed modal
+            if (e.ctrlKey && e.shiftKey && e.key === "D") {
+              e.preventDefault();
+              this.showSiteData();
+            }
+          });
         }
 
         showSiteData() {
@@ -1405,6 +1421,251 @@
               notificationStyle.remove();
             }, 300);
           }, 3000);
+        }
+
+        // New bottom popup method to show current page MindCache data
+        showBottomPopup() {
+          // Remove existing popup if present
+          const existing = document.querySelector(".mindcache-bottom-popup");
+          if (existing) {
+            existing.remove();
+            return;
+          }
+
+          const highlights = JSON.parse(
+            localStorage.getItem("mindcache-highlights") || "[]"
+          );
+          const notes = JSON.parse(
+            localStorage.getItem("mindcache-notes") || "[]"
+          );
+          const quotes = JSON.parse(
+            localStorage.getItem("mindcache-quotes") || "[]"
+          );
+
+          const domainHighlights = highlights.filter(
+            (h) => h.domain === this.domain
+          );
+          const domainNotes = notes.filter((n) => n.domain === this.domain);
+          const domainQuotes = quotes.filter((q) => q.domain === this.domain);
+
+          const allItems = [
+            ...domainHighlights,
+            ...domainNotes,
+            ...domainQuotes,
+          ]
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+            .slice(0, 10); // Show only latest 10 items
+
+          const popup = document.createElement("div");
+          popup.className = "mindcache-bottom-popup";
+          popup.innerHTML = `
+            <div style="
+              position: fixed;
+              bottom: 20px;
+              right: 20px;
+              width: 400px;
+              max-height: 500px;
+              background: white;
+              border-radius: 12px;
+              box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+              z-index: 10001;
+              overflow: hidden;
+              border: 1px solid #e2e8f0;
+              animation: slideUpBottom 0.3s ease forwards;
+            ">
+              <div style="
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 16px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              ">
+                <div>
+                  <h3 style="margin: 0; font-size: 16px;">📚 ${this.domain}</h3>
+                  <div style="font-size: 12px; opacity: 0.9; margin-top: 4px;">
+                    ${domainHighlights.length} highlights • ${
+            domainNotes.length
+          } notes • ${domainQuotes.length} quotes
+                  </div>
+                </div>
+                <button class="close-popup-btn" style="
+                  background: none;
+                  border: none;
+                  color: white;
+                  font-size: 20px;
+                  cursor: pointer;
+                  padding: 4px;
+                  border-radius: 4px;
+                  transition: background 0.2s;
+                " onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='none'">×</button>
+              </div>
+              
+              <div style="max-height: 400px; overflow-y: auto; padding: 16px;">
+                ${
+                  allItems.length === 0
+                    ? `
+                  <div style="text-align: center; padding: 40px 20px; color: #666;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📝</div>
+                    <p style="margin: 0; font-size: 14px;">No MindCache data for this page yet</p>
+                    <p style="margin: 8px 0 0 0; font-size: 12px; color: #999;">Start highlighting text or adding notes!</p>
+                  </div>
+                `
+                    : allItems
+                        .map((item) => {
+                          const itemType =
+                            item.text && !item.content
+                              ? "highlight"
+                              : item.content
+                              ? "note"
+                              : "quote";
+                          const icon =
+                            itemType === "highlight"
+                              ? "🖍️"
+                              : itemType === "note"
+                              ? "💭"
+                              : "💾";
+                          const content = item.text || item.content || "";
+                          const date = new Date(
+                            item.timestamp
+                          ).toLocaleDateString();
+
+                          return `
+                    <div style="
+                      margin-bottom: 12px;
+                      padding: 12px;
+                      background: ${
+                        itemType === "highlight"
+                          ? "#fef3c7"
+                          : itemType === "note"
+                          ? "#dbeafe"
+                          : "#e0e7ff"
+                      };
+                      border-radius: 8px;
+                      border-left: 4px solid ${
+                        itemType === "highlight"
+                          ? "#f59e0b"
+                          : itemType === "note"
+                          ? "#3b82f6"
+                          : "#6366f1"
+                      };
+                      font-size: 13px;
+                      line-height: 1.4;
+                    ">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-weight: 600; color: #374151;">${icon} ${
+                            itemType.charAt(0).toUpperCase() + itemType.slice(1)
+                          }</span>
+                        <span style="font-size: 11px; color: #6b7280;">${date}</span>
+                      </div>
+                      <div style="color: #1f2937;">${
+                        content.length > 150
+                          ? content.substring(0, 150) + "..."
+                          : content
+                      }</div>
+                      ${
+                        item.note && itemType === "highlight"
+                          ? `<div style="margin-top: 6px; font-style: italic; color: #3b82f6; font-size: 12px;">Note: ${item.note}</div>`
+                          : ""
+                      }
+                    </div>
+                  `;
+                        })
+                        .join("")
+                }
+              </div>
+              
+              <div style="
+                border-top: 1px solid #e2e8f0;
+                padding: 12px 16px;
+                background: #f8fafc;
+                display: flex;
+                gap: 8px;
+              ">
+                <button class="view-all-btn" style="
+                  flex: 1;
+                  background: #667eea;
+                  color: white;
+                  border: none;
+                  padding: 8px 12px;
+                  border-radius: 6px;
+                  cursor: pointer;
+                  font-size: 12px;
+                  transition: background 0.2s;
+                " onmouseover="this.style.background='#5a6fd8'" onmouseout="this.style.background='#667eea'">
+                  📋 View All
+                </button>
+                <button class="open-extension-btn" style="
+                  flex: 1;
+                  background: #10b981;
+                  color: white;
+                  border: none;
+                  padding: 8px 12px;
+                  border-radius: 6px;
+                  cursor: pointer;
+                  font-size: 12px;
+                  transition: background 0.2s;
+                " onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
+                  🚀 Open Extension
+                </button>
+              </div>
+            </div>
+          `;
+
+          // Add animation styles
+          const style = document.createElement("style");
+          style.textContent = `
+            @keyframes slideUpBottom {
+              from { transform: translateY(100%); opacity: 0; }
+              to { transform: translateY(0); opacity: 1; }
+            }
+            @keyframes slideDownBottom {
+              from { transform: translateY(0); opacity: 1; }
+              to { transform: translateY(100%); opacity: 0; }
+            }
+          `;
+          document.head.appendChild(style);
+
+          document.body.appendChild(popup);
+
+          // Add event listeners
+          const closePopup = () => {
+            popup.style.animation = "slideDownBottom 0.3s ease forwards";
+            setTimeout(() => {
+              popup.remove();
+              style.remove();
+            }, 300);
+          };
+
+          popup
+            .querySelector(".close-popup-btn")
+            .addEventListener("click", closePopup);
+
+          popup.querySelector(".view-all-btn").addEventListener("click", () => {
+            this.showSiteData();
+            closePopup();
+          });
+
+          popup
+            .querySelector(".open-extension-btn")
+            .addEventListener("click", () => {
+              chrome.action.openPopup();
+              closePopup();
+            });
+
+          // Auto close after 10 seconds
+          setTimeout(closePopup, 10000);
+
+          // Close on outside click
+          setTimeout(() => {
+            const outsideClickHandler = (e) => {
+              if (!popup.contains(e.target)) {
+                closePopup();
+                document.removeEventListener("click", outsideClickHandler);
+              }
+            };
+            document.addEventListener("click", outsideClickHandler);
+          }, 100);
         }
       }
 

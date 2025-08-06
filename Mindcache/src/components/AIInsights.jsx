@@ -12,7 +12,6 @@ const AIInsights = () => {
 
   const loadInsights = async () => {
     try {
-      // Load AI insights from storage
       const result = await chrome.storage.local.get(["ai_insights"]);
       const aiInsights = result.ai_insights || [];
 

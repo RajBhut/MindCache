@@ -8,6 +8,7 @@ import {
 import useStore from "./store/useStore";
 import Dashboard from "./components/Dashboard";
 import InteractionsList from "./components/InteractionsList";
+import MindCacheView from "./components/MindCacheView";
 import SummariesView from "./components/SummariesView";
 import AIInsights from "./components/AIInsights";
 import Settings from "./components/Settings";
@@ -60,6 +61,7 @@ function App() {
                 element={<Navigate to="/dashboard" replace />}
               />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/mindcache" element={<MindCacheView />} />
               <Route path="/interactions" element={<InteractionsList />} />
               <Route path="/summaries" element={<SummariesView />} />
               <Route path="/ai-insights" element={<AIInsights />} />

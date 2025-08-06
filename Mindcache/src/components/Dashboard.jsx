@@ -1,15 +1,24 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import useStore from "../store/useStore";
-import { BarChart3, Globe, Clock, Activity } from "lucide-react";
+import {
+  BarChart3,
+  Globe,
+  Clock,
+  Activity,
+  Highlighter,
+  FileText,
+  Quote,
+} from "lucide-react";
 
 const Dashboard = () => {
-  const { getStats, interactions, summaries } = useStore();
+  const { getStats, interactions, summaries, highlights, notes, quotes } =
+    useStore();
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
     setStats(getStats());
-  }, [interactions, summaries, getStats]);
+  }, [interactions, summaries, highlights, notes, quotes, getStats]);
 
   if (!stats) {
     return <div className="text-center py-4">Loading stats...</div>;
@@ -17,6 +26,7 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-4">
+      {/* Main Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
         <StatCard
           title="Total"
@@ -41,6 +51,34 @@ const Dashboard = () => {
           value={stats.topDomains.length}
           icon={<Globe className="w-4 h-4" />}
           color="orange"
+        />
+      </div>
+
+      {/* MindCache Stats Grid */}
+      <div className="grid grid-cols-3 gap-2">
+        <StatCard
+          title="Highlights"
+          value={stats.totalHighlights || 0}
+          subtitle={`${stats.todayHighlights || 0} today`}
+          icon={<Highlighter className="w-4 h-4" />}
+          color="yellow"
+          compact
+        />
+        <StatCard
+          title="Notes"
+          value={stats.totalNotes || 0}
+          subtitle={`${stats.todayNotes || 0} today`}
+          icon={<FileText className="w-4 h-4" />}
+          color="blue"
+          compact
+        />
+        <StatCard
+          title="Quotes"
+          value={stats.totalQuotes || 0}
+          subtitle={`${stats.todayQuotes || 0} today`}
+          icon={<Quote className="w-4 h-4" />}
+          color="indigo"
+          compact
         />
       </div>
 
@@ -122,13 +160,30 @@ const Dashboard = () => {
   );
 };
 
-const StatCard = ({ title, value, icon, color }) => {
+const StatCard = ({ title, value, icon, color, subtitle, compact }) => {
   const colorClasses = {
     blue: "bg-blue-500",
     green: "bg-green-500",
     purple: "bg-purple-500",
     orange: "bg-orange-500",
+    yellow: "bg-yellow-500",
+    indigo: "bg-indigo-500",
   };
+
+  if (compact) {
+    return (
+      <div className="bg-white p-2 rounded-lg shadow">
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-xs font-medium text-gray-600">{title}</p>
+          <div className={`p-1 rounded ${colorClasses[color]} text-white`}>
+            {icon}
+          </div>
+        </div>
+        <p className="text-lg font-bold text-gray-900">{value}</p>
+        {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white p-3 rounded-lg shadow">

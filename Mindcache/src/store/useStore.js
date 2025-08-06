@@ -11,6 +11,9 @@ const useStore = create((set, get) => ({
   // State
   interactions: [],
   summaries: [],
+  highlights: [],
+  notes: [],
+  quotes: [],
   settings: {
     trackingEnabled: true,
     dataRetentionDays: 30,
@@ -39,6 +42,9 @@ const useStore = create((set, get) => ({
           "web_interactions",
           "interaction_summaries",
           "user_settings",
+          "mindcache-highlights",
+          "mindcache-notes",
+          "mindcache-quotes",
         ]),
         new Promise((_, reject) =>
           setTimeout(() => reject(new Error("Storage access timeout")), 10000)
@@ -48,6 +54,9 @@ const useStore = create((set, get) => ({
       set({
         interactions: result.web_interactions || [],
         summaries: result.interaction_summaries || [],
+        highlights: result["mindcache-highlights"] || [],
+        notes: result["mindcache-notes"] || [],
+        quotes: result["mindcache-quotes"] || [],
         settings: { ...get().settings, ...(result.user_settings || {}) },
         loading: false,
       });
@@ -117,7 +126,7 @@ const useStore = create((set, get) => ({
 
   // Get interaction statistics
   getStats: () => {
-    const { interactions, summaries } = get();
+    const { interactions, summaries, highlights, notes, quotes } = get();
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -127,7 +136,14 @@ const useStore = create((set, get) => ({
       (i) => i.timestamp >= todayTimestamp
     );
 
-    // Get top domains
+    // Today's mindcache activity
+    const todayHighlights = highlights.filter(
+      (h) => new Date(h.timestamp) >= today
+    );
+    const todayNotes = notes.filter((n) => new Date(n.timestamp) >= today);
+    const todayQuotes = quotes.filter((q) => new Date(q.timestamp) >= today);
+
+    // Get top domains (including mindcache data)
     const domainCount = {};
     interactions.forEach((interaction) => {
       if (interaction.data.url) {
@@ -135,6 +151,28 @@ const useStore = create((set, get) => ({
           const domain = new URL(interaction.data.url).hostname;
           domainCount[domain] = (domainCount[domain] || 0) + 1;
         } catch (e) {}
+      }
+    });
+
+    // Add mindcache domains
+    highlights.forEach((highlight) => {
+      const domain = highlight.domain;
+      if (domain) {
+        domainCount[domain] = (domainCount[domain] || 0) + 1;
+      }
+    });
+
+    notes.forEach((note) => {
+      const domain = note.domain;
+      if (domain) {
+        domainCount[domain] = (domainCount[domain] || 0) + 1;
+      }
+    });
+
+    quotes.forEach((quote) => {
+      const domain = quote.domain;
+      if (domain) {
+        domainCount[domain] = (domainCount[domain] || 0) + 1;
       }
     });
 
@@ -149,10 +187,21 @@ const useStore = create((set, get) => ({
       typeCount[interaction.type] = (typeCount[interaction.type] || 0) + 1;
     });
 
+    // Add mindcache activity types
+    typeCount["highlights"] = highlights.length;
+    typeCount["notes"] = notes.length;
+    typeCount["quotes"] = quotes.length;
+
     return {
       totalInteractions: interactions.length,
       todayInteractions: todayInteractions.length,
       totalSummaries: summaries.length,
+      totalHighlights: highlights.length,
+      totalNotes: notes.length,
+      totalQuotes: quotes.length,
+      todayHighlights: todayHighlights.length,
+      todayNotes: todayNotes.length,
+      todayQuotes: todayQuotes.length,
       topDomains,
       interactionTypes: typeCount,
       lastUpdated: interactions[interactions.length - 1]?.timestamp || null,
