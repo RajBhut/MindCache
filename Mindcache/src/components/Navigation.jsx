@@ -1,11 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { BarChart3, List, FileText, Settings } from "lucide-react";
+import { BarChart3, List, FileText, Settings, Brain } from "lucide-react";
 
 const Navigation = () => {
   const navItems = [
     { to: "/dashboard", label: "Dashboard", icon: BarChart3 },
     { to: "/interactions", label: "Interactions", icon: List },
     { to: "/summaries", label: "Summaries", icon: FileText },
+    { to: "/ai-insights", label: "AI Insights", icon: Brain },
     { to: "/settings", label: "Settings", icon: Settings },
   ];
 

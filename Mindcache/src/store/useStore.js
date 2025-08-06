@@ -34,7 +34,6 @@ const useStore = create((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      // Add timeout to prevent hanging
       const result = await Promise.race([
         browserAPI.storage.local.get([
           "web_interactions",
@@ -135,9 +134,7 @@ const useStore = create((set, get) => ({
         try {
           const domain = new URL(interaction.data.url).hostname;
           domainCount[domain] = (domainCount[domain] || 0) + 1;
-        } catch (e) {
-          // Invalid URL, skip
-        }
+        } catch (e) {}
       }
     });
 
@@ -174,7 +171,6 @@ const useStore = create((set, get) => ({
     };
   },
 
-  // Import data
   importData: async (data) => {
     const browserAPI = getBrowserAPI();
     if (!browserAPI) return;

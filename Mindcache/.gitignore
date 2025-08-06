@@ -11,7 +11,10 @@ node_modules
 dist
 dist-ssr
 *.local
-
+Lib
+venv
+mindcache_ai.db
+mindcache.db
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -9,6 +9,7 @@ import useStore from "./store/useStore";
 import Dashboard from "./components/Dashboard";
 import InteractionsList from "./components/InteractionsList";
 import SummariesView from "./components/SummariesView";
+import AIInsights from "./components/AIInsights";
 import Settings from "./components/Settings";
 import Navigation from "./components/Navigation";
 import LoadingSpinner from "./components/LoadingSpinner";
@@ -61,6 +62,7 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/interactions" element={<InteractionsList />} />
               <Route path="/summaries" element={<SummariesView />} />
+              <Route path="/ai-insights" element={<AIInsights />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>
           </main>

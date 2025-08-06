@@ -4,6 +4,13 @@ const STORAGE_KEYS = {
   SETTINGS: "user_settings",
 };
 
+// Backend configuration
+const BACKEND_CONFIG = {
+  url: "http://localhost:5000/api/analyze",
+  enabled: true,
+  timeout: 5000,
+};
+
 const isExtensionContext = () => {
   return (
     typeof chrome !== "undefined" && chrome.storage && chrome.storage.local
@@ -17,6 +24,7 @@ class InteractionTracker {
       return;
     }
     this.setupListeners();
+    this.pendingAnalysis = new Map();
   }
 
   setupListeners() {
@@ -48,16 +56,113 @@ class InteractionTracker {
     });
 
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      if (message.type === "user_interaction") {
-        this.recordInteraction(message.action, {
-          ...message.data,
-          url: sender.tab?.url,
-          timestamp: Date.now(),
-          tabId: sender.tab?.id,
-        });
+      // Always respond to prevent message channel closed error
+      try {
+        if (message.type === "user_interaction") {
+          // Process the interaction
+          this.recordInteraction(message.action, {
+            ...message.data,
+            url: sender.tab?.url,
+            timestamp: Date.now(),
+            tabId: sender.tab?.id,
+          });
+
+          // Send meaningful interactions to backend for AI analysis
+          if (this.shouldAnalyze(message.action)) {
+            this.sendToBackend(message.action, {
+              ...message.data,
+              url: sender.tab?.url,
+              timestamp: Date.now(),
+              tabId: sender.tab?.id,
+            });
+          }
+
+          // Send immediate response to prevent the error
+          sendResponse({ success: true, timestamp: Date.now() });
+        } else {
+          // Unknown message type
+          sendResponse({ success: false, error: "Unknown message type" });
+        }
+      } catch (error) {
+        console.error("Error processing message:", error);
+        sendResponse({ success: false, error: error.message });
       }
-      return true;
     });
+  }
+
+  shouldAnalyze(actionType) {
+    // Only send meaningful interactions to backend
+    const meaningfulActions = [
+      "reading_session",
+      "page_session",
+      "meaningful_click",
+      "content_selection",
+    ];
+    return meaningfulActions.includes(actionType);
+  }
+
+  async sendToBackend(action, data) {
+    if (!BACKEND_CONFIG.enabled) return;
+
+    try {
+      const payload = {
+        action,
+        ...data,
+        extensionVersion: "1.0.0",
+        timestamp: Date.now(),
+      };
+
+      const response = await fetch(BACKEND_CONFIG.url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(BACKEND_CONFIG.timeout),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Backend analysis:", result);
+
+        // Store AI insights locally
+        if (result.content_analysis || result.behavior_analysis) {
+          this.storeAIInsights(result);
+        }
+      } else {
+        console.warn("Backend analysis failed:", response.status);
+      }
+    } catch (error) {
+      if (error.name === "AbortError") {
+        console.warn("Backend request timeout");
+      } else {
+        console.error("Backend communication error:", error);
+      }
+    }
+  }
+
+  async storeAIInsights(insights) {
+    try {
+      const stored = await chrome.storage.local.get("ai_insights");
+      const existingInsights = stored.ai_insights || [];
+
+      existingInsights.push({
+        ...insights,
+        timestamp: Date.now(),
+        id: this.generateId(),
+      });
+
+      // Keep only last 100 insights
+      if (existingInsights.length > 100) {
+        existingInsights.splice(0, existingInsights.length - 100);
+      }
+
+      await chrome.storage.local.set({
+        ai_insights: existingInsights,
+      });
+    } catch (error) {
+      console.error("Error storing AI insights:", error);
+    }
   }
 
   async recordInteraction(type, data) {
