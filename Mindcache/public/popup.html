@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MindCache</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 400px;
+        height: 600px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #333;
+        overflow: hidden;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 16px;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .header h1 {
+        color: white;
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .header .domain {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 12px;
+      }
+
+      .tabs {
+        display: flex;
+        background: rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .tab {
+        flex: 1;
+        padding: 12px 8px;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border-bottom: 2px solid transparent;
+      }
+
+      .tab:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+      }
+
+      .tab.active {
+        color: white;
+        background: rgba(255, 255, 255, 0.2);
+        border-bottom-color: white;
+      }
+
+      .tab-content {
+        height: 480px;
+        overflow-y: auto;
+        background: white;
+      }
+
+      .tab-panel {
+        display: none;
+        padding: 16px;
+        height: 100%;
+      }
+
+      .tab-panel.active {
+        display: block;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .stat-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+      }
+
+      .stat-icon {
+        font-size: 24px;
+        margin-bottom: 4px;
+      }
+
+      .stat-number {
+        font-size: 20px;
+        font-weight: bold;
+        color: #2d3748;
+      }
+
+      .stat-label {
+        font-size: 10px;
+        color: #718096;
+        text-transform: uppercase;
+        font-weight: 500;
+      }
+
+      .item-list {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .item {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 8px;
+        font-size: 12px;
+      }
+
+      .item-text {
+        color: #4a5568;
+        margin-bottom: 4px;
+        line-height: 1.4;
+      }
+
+      .item-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #718096;
+        font-size: 10px;
+      }
+
+      .item-actions {
+        display: flex;
+        gap: 4px;
+      }
+
+      .btn-small {
+        padding: 2px 6px;
+        border: none;
+        border-radius: 3px;
+        font-size: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .btn-delete {
+        background: #fed7d7;
+        color: #c53030;
+      }
+
+      .btn-delete:hover {
+        background: #feb2b2;
+      }
+
+      .btn-copy {
+        background: #bee3f8;
+        color: #2b6cb0;
+      }
+
+      .btn-copy:hover {
+        background: #90cdf4;
+      }
+
+      .empty-state {
+        text-align: center;
+        color: #718096;
+        padding: 40px 20px;
+      }
+
+      .empty-icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+        opacity: 0.5;
+      }
+
+      .actions-bar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .btn {
+        flex: 1;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .btn-primary {
+        background: #667eea;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #5a67d8;
+      }
+
+      .btn-secondary {
+        background: #e2e8f0;
+        color: #4a5568;
+      }
+
+      .btn-secondary:hover {
+        background: #cbd5e0;
+      }
+
+      .btn-danger {
+        background: #fed7d7;
+        color: #c53030;
+      }
+
+      .btn-danger:hover {
+        background: #feb2b2;
+      }
+
+      /* Custom scrollbar */
+      .tab-content::-webkit-scrollbar,
+      .item-list::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      .tab-content::-webkit-scrollbar-track,
+      .item-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+
+      .tab-content::-webkit-scrollbar-thumb,
+      .item-list::-webkit-scrollbar-thumb {
+        background: #cbd5e0;
+        border-radius: 2px;
+      }
+
+      .tab-content::-webkit-scrollbar-thumb:hover,
+      .item-list::-webkit-scrollbar-thumb:hover {
+        background: #a0aec0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>🧠 MindCache</h1>
+      <div class="domain" id="currentDomain">Loading...</div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="overview">📊 Overview</div>
+      <div class="tab" data-tab="highlights">🖍️ Highlights</div>
+      <div class="tab" data-tab="notes">💭 Notes</div>
+      <div class="tab" data-tab="quotes">💾 Quotes</div>
+    </div>
+
+    <div class="tab-content">
+      <!-- Overview Tab -->
+      <div class="tab-panel active" id="overview">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">🖍️</div>
+            <div class="stat-number" id="highlightCount">0</div>
+            <div class="stat-label">Highlights</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">💭</div>
+            <div class="stat-number" id="noteCount">0</div>
+            <div class="stat-label">Notes</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">💾</div>
+            <div class="stat-number" id="quoteCount">0</div>
+            <div class="stat-label">Quotes</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🌐</div>
+            <div class="stat-number" id="totalSites">0</div>
+            <div class="stat-label">Sites</div>
+          </div>
+        </div>
+
+        <div class="actions-bar">
+          <button class="btn btn-primary" id="exportAllBtn">
+            📤 Export All
+          </button>
+          <button class="btn btn-secondary" id="settingsBtn">
+            ⚙️ Settings
+          </button>
+        </div>
+
+        <div class="actions-bar">
+          <button class="btn btn-danger" id="clearAllBtn">
+            🗑️ Clear All Data
+          </button>
+        </div>
+      </div>
+
+      <!-- Highlights Tab -->
+      <div class="tab-panel" id="highlights">
+        <div class="actions-bar">
+          <button class="btn btn-secondary" id="clearHighlightsBtn">
+            🗑️ Clear All
+          </button>
+          <button class="btn btn-primary" id="exportHighlightsBtn">
+            📤 Export
+          </button>
+        </div>
+        <div class="item-list" id="highlightsList">
+          <div class="empty-state">
+            <div class="empty-icon">🖍️</div>
+            <div>No highlights yet</div>
+            <div style="font-size: 10px; margin-top: 4px">
+              Select text on any webpage to create highlights
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes Tab -->
+      <div class="tab-panel" id="notes">
+        <div class="actions-bar">
+          <button class="btn btn-secondary" id="clearNotesBtn">
+            🗑️ Clear All
+          </button>
+          <button class="btn btn-primary" id="exportNotesBtn">📤 Export</button>
+        </div>
+        <div class="item-list" id="notesList">
+          <div class="empty-state">
+            <div class="empty-icon">💭</div>
+            <div>No notes yet</div>
+            <div style="font-size: 10px; margin-top: 4px">
+              Select text and add notes to save your thoughts
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quotes Tab -->
+      <div class="tab-panel" id="quotes">
+        <div class="actions-bar">
+          <button class="btn btn-secondary" id="clearQuotesBtn">
+            🗑️ Clear All
+          </button>
+          <button class="btn btn-primary" id="exportQuotesBtn">
+            📤 Export
+          </button>
+        </div>
+        <div class="item-list" id="quotesList">
+          <div class="empty-state">
+            <div class="empty-icon">💾</div>
+            <div>No quotes yet</div>
+            <div style="font-size: 10px; margin-top: 4px">
+              Save important quotes from webpages
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

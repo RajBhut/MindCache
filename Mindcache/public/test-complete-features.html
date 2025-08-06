@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MindCache Extension Complete Features Test</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        max-width: 900px;
+        margin: 50px auto;
+        line-height: 1.7;
+        padding: 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #333;
+      }
+      .container {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+      .test-section {
+        background: #f8fafc;
+        padding: 25px;
+        margin: 25px 0;
+        border-radius: 12px;
+        border-left: 5px solid #667eea;
+      }
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+      }
+      .feature-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e2e8f0;
+      }
+      .instructions {
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin: 25px 0;
+      }
+      .highlight-demo {
+        background: #ffeb3b;
+        padding: 3px 6px;
+        border-radius: 4px;
+        color: #333;
+      }
+      .status-indicator {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background: #48bb78;
+        color: white;
+        padding: 10px 16px;
+        border-radius: 25px;
+        font-size: 12px;
+        font-weight: 600;
+        z-index: 9998;
+      }
+      .emoji {
+        font-size: 1.2em;
+        margin-right: 8px;
+      }
+      h1 {
+        color: #2d3748;
+      }
+      h2 {
+        color: #4a5568;
+      }
+      h3 {
+        color: #667eea;
+      }
+      .btn-test {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        margin: 5px;
+        transition: all 0.2s;
+      }
+      .btn-test:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="status-indicator">🧠 MindCache Extension Active</div>
+
+    <div class="container">
+      <h1>🚀 MindCache Extension - Complete Feature Test Suite</h1>
+
+      <div class="instructions">
+        <h3><span class="emoji">📋</span>Complete Testing Checklist:</h3>
+        <ol>
+          <li>
+            <strong>Text Selection Toolbar:</strong> Select any text below to
+            see the 6-button toolbar (💾 💭 🖍️ 📋 🔍 🧠)
+          </li>
+          <li>
+            <strong>Enhanced Note Dialog:</strong> Click "💭 Add Note" to see
+            the modern dialog with character counter
+          </li>
+          <li>
+            <strong>Real-time Data Sync:</strong> Perform actions and check
+            extension popup for updated counts
+          </li>
+          <li>
+            <strong>Focus Mode:</strong> Use the 🎯 button (top-right) or
+            Ctrl+Shift+F to toggle focus mode
+          </li>
+          <li>
+            <strong>Site Activity Tracker:</strong> Check the 📊 indicator
+            (bottom-right) for interaction counts
+          </li>
+          <li>
+            <strong>AI Insights:</strong> Select text and click 🧠 for AI
+            analysis
+          </li>
+        </ol>
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h3><span class="emoji">💾</span>Save Quote</h3>
+          <p>
+            Select text and click the save quote button to store meaningful
+            quotes with context and metadata.
+          </p>
+          <blockquote
+            style="
+              border-left: 4px solid #667eea;
+              padding-left: 16px;
+              font-style: italic;
+              color: #666;
+            "
+          >
+            "The best way to predict the future is to create it." - Peter
+            Drucker
+          </blockquote>
+        </div>
+
+        <div class="feature-card">
+          <h3><span class="emoji">💭</span>Enhanced Notes</h3>
+          <p>
+            Add personal notes to selected text with the modern dialog interface
+            featuring character counting and validation.
+          </p>
+          <p>
+            Try selecting this text and adding a note about user experience
+            design principles and methodologies.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <h3><span class="emoji">🖍️</span>Smart Highlighting</h3>
+          <p>
+            Highlight important text that syncs across your extension. Test with
+            this <span class="highlight-demo">sample highlighted text</span> to
+            see the feature in action.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <h3><span class="emoji">🧠</span>AI Insights</h3>
+          <p>
+            Get intelligent analysis of selected text including summaries, key
+            points, sentiment analysis, and related topics using advanced AI
+            processing.
+          </p>
+        </div>
+      </div>
+
+      <div class="test-section">
+        <h2>
+          <span class="emoji">📝</span>Sample Content for Comprehensive Testing
+        </h2>
+        <p>
+          This comprehensive test content is designed to validate all features
+          of the MindCache extension. The
+          <strong>enhanced selection toolbar</strong> should appear whenever you
+          select text, providing six distinct actions that work seamlessly
+          together.
+        </p>
+
+        <h3>Technology Trends for 2025</h3>
+        <p>
+          Artificial Intelligence continues to reshape industries with machine
+          learning algorithms becoming more sophisticated and accessible. Cloud
+          computing infrastructure enables scalable solutions, while
+          cybersecurity remains a critical concern for organizations worldwide.
+        </p>
+
+        <p>
+          Select different portions of this content to test various features:
+          <strong>highlighting</strong>, <em>note-taking</em>, quote saving, and
+          AI insights generation.
+        </p>
+
+        <h3>Testing Scenarios</h3>
+        <ul>
+          <li>
+            <strong>Short text selection:</strong> Try selecting just a few
+            words
+          </li>
+          <li>
+            <strong>Long paragraph selection:</strong> Select an entire
+            paragraph to test performance
+          </li>
+          <li>
+            <strong>Cross-element selection:</strong> Select text that spans
+            multiple HTML elements
+          </li>
+          <li>
+            <strong>Special characters:</strong> Test with "quotes", symbols
+            &amp; numbers (123)
+          </li>
+        </ul>
+      </div>
+
+      <div class="test-section">
+        <h2><span class="emoji">🔬</span>Advanced Features Testing</h2>
+
+        <h3>Focus Mode (Ctrl+Shift+F)</h3>
+        <p>
+          Focus mode dims all content except highlighted text and elements you
+          hover over. This creates a distraction-free reading environment.
+          Activate it using the 🎯 button or the keyboard shortcut.
+        </p>
+
+        <h3>Site Activity Tracking</h3>
+        <p>
+          The bottom-right indicator shows your interaction count for this
+          domain. As you highlight text, save quotes, and add notes, the counter
+          updates in real-time. Click it to see detailed site statistics and
+          management options.
+        </p>
+
+        <h3>Data Synchronization</h3>
+        <p>
+          All your interactions are automatically saved to localStorage and
+          synced with Chrome storage. Open the extension popup to see your
+          activity counts update immediately after each action.
+        </p>
+      </div>
+
+      <div class="test-section">
+        <h2><span class="emoji">🎯</span>Performance Expectations</h2>
+        <div class="feature-grid">
+          <div>
+            <h4>✅ Should Work:</h4>
+            <ul>
+              <li>Smooth toolbar animations</li>
+              <li>Instant text highlighting</li>
+              <li>Real-time count updates</li>
+              <li>Responsive dialog interactions</li>
+              <li>Cross-page data persistence</li>
+            </ul>
+          </div>
+          <div>
+            <h4>🔧 Features to Test:</h4>
+            <ul>
+              <li>Keyboard shortcuts (Ctrl+Shift+F)</li>
+              <li>Click outside to close dialogs</li>
+              <li>Character limit validation (500 chars)</li>
+              <li>Export functionality</li>
+              <li>Clear data options</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin: 40px 0">
+        <button class="btn-test" onclick="testAllFeatures()">
+          🧪 Run Automated Feature Test
+        </button>
+        <button class="btn-test" onclick="showDataSummary()">
+          📊 Show Data Summary
+        </button>
+        <button class="btn-test" onclick="clearTestData()">
+          🗑️ Clear Test Data
+        </button>
+      </div>
+    </div>
+
+    <script src="content.js"></script>
+    <script src="content-fixes.js"></script>
+
+    <script>
+      // Test helper functions
+      function testAllFeatures() {
+        console.log("🧪 Starting automated feature test...");
+
+        // Test data sync
+        const testData = {
+          highlights: JSON.parse(
+            localStorage.getItem("mindcache-highlights") || "[]"
+          ),
+          notes: JSON.parse(localStorage.getItem("mindcache-notes") || "[]"),
+          quotes: JSON.parse(localStorage.getItem("mindcache-quotes") || "[]"),
+        };
+
+        console.log("📊 Current data state:", testData);
+
+        // Test feature availability
+        const features = {
+          "Selection Toolbar": !!window.MindCacheSelectionToolbar,
+          "Enhanced Note Dialog": !!window.showEnhancedNoteDialog,
+          "Focus Mode": !!window.MindCacheFocusMode,
+          "Site Tracker": !!window.MindCacheSiteTracker,
+          "AI Insights": !!window.getAIInsights,
+          "Data Sync Manager": !!window.DataSyncManager,
+        };
+
+        console.log("✅ Feature availability:", features);
+
+        const allFeaturesWorking = Object.values(features).every(
+          (f) => f === true
+        );
+
+        alert(
+          allFeaturesWorking
+            ? "🎉 All features are loaded and ready!"
+            : "⚠️ Some features may not be working. Check console for details."
+        );
+      }
+
+      function showDataSummary() {
+        const highlights = JSON.parse(
+          localStorage.getItem("mindcache-highlights") || "[]"
+        );
+        const notes = JSON.parse(
+          localStorage.getItem("mindcache-notes") || "[]"
+        );
+        const quotes = JSON.parse(
+          localStorage.getItem("mindcache-quotes") || "[]"
+        );
+        const domain = window.location.hostname;
+
+        const domainData = {
+          highlights: highlights.filter((h) => h.domain === domain).length,
+          notes: notes.filter((n) => n.domain === domain).length,
+          quotes: quotes.filter((q) => q.domain === domain).length,
+        };
+
+        alert(
+          `📊 Current Site Data:\n🖍️ Highlights: ${domainData.highlights}\n💭 Notes: ${domainData.notes}\n💾 Quotes: ${domainData.quotes}\n\nTotal across all sites:\n🖍️ ${highlights.length} highlights\n💭 ${notes.length} notes\n💾 ${quotes.length} quotes`
+        );
+      }
+
+      function clearTestData() {
+        if (confirm("🗑️ Clear all test data for this site?")) {
+          [
+            "mindcache-highlights",
+            "mindcache-notes",
+            "mindcache-quotes",
+            "mindcache-ai-insights",
+          ].forEach((key) => {
+            const data = JSON.parse(localStorage.getItem(key) || "[]");
+            const filtered = data.filter(
+              (item) => item.domain !== window.location.hostname
+            );
+            localStorage.setItem(key, JSON.stringify(filtered));
+          });
+
+          if (window.MindCacheSiteTracker) {
+            window.MindCacheSiteTracker.updateActivityCount();
+          }
+
+          alert("✅ Test data cleared for this site!");
+        }
+      }
+
+      // Auto-run feature detection on load
+      setTimeout(() => {
+        console.log("🔍 MindCache Extension Feature Detection:");
+        console.log(
+          "📋 Selection Toolbar:",
+          !!window.MindCacheSelectionToolbar ? "✅ Active" : "❌ Not Found"
+        );
+        console.log(
+          "💭 Enhanced Note Dialog:",
+          !!window.showEnhancedNoteDialog ? "✅ Active" : "❌ Not Found"
+        );
+        console.log(
+          "🎯 Focus Mode:",
+          !!window.MindCacheFocusMode ? "✅ Active" : "❌ Not Found"
+        );
+        console.log(
+          "📊 Site Tracker:",
+          !!window.MindCacheSiteTracker ? "✅ Active" : "❌ Not Found"
+        );
+        console.log(
+          "🧠 AI Insights:",
+          !!window.getAIInsights ? "✅ Active" : "❌ Not Found"
+        );
+        console.log(
+          "🔄 Data Sync:",
+          !!window.DataSyncManager ? "✅ Active" : "❌ Not Found"
+        );
+
+        if (window.DataSyncManager) {
+          window.DataSyncManager.updateExtensionCounts();
+          console.log("📤 Extension data sync initiated");
+        }
+      }, 2000);
+    </script>
+  </body>
+</html>
