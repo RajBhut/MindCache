@@ -520,7 +520,7 @@ class MessageHandler {
         // Use the safe message handler
         MessageHandler.sendMessage(message)
           .then((response) => {
-            // Successfully sent
+            // Successfully sent - only log real errors
             if (
               response &&
               !response.success &&
@@ -530,11 +530,20 @@ class MessageHandler {
             }
           })
           .catch((error) => {
-            // Only log unexpected errors
-            console.error("Error tracking interaction:", error.message);
+            // Silently handle extension context errors
+            if (
+              !error.message.includes("Extension context invalidated") &&
+              !error.message.includes("message channel closed") &&
+              !error.message.includes("receiving end does not exist")
+            ) {
+              console.error("Error tracking interaction:", error.message);
+            }
           });
       } catch (error) {
-        console.error("Error tracking interaction:", error);
+        // Silently handle context invalidation
+        if (!error.message.includes("Extension context invalidated")) {
+          console.error("Error tracking interaction:", error);
+        }
       }
     }
   }

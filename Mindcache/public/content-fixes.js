@@ -883,12 +883,69 @@
 
           this.indicator.style.display = "block";
           this.indicator.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="display: flex; align-items: center; gap: 6px; position: relative;">
               <span>📚</span>
               <span>${total}</span>
               <span style="font-size: 10px; opacity: 0.8;">items</span>
+              <button onclick="window.MindCacheFloatingIndicator.clearDomainData()" 
+                      style="margin-left: 8px; background: rgba(255,255,255,0.2); border: none; color: white; 
+                             border-radius: 50%; width: 18px; height: 18px; font-size: 10px; cursor: pointer;
+                             display: flex; align-items: center; justify-content: center; opacity: 0.7;"
+                      title="Clear data for this domain">✕</button>
             </div>
           `;
+        }
+
+        clearDomainData() {
+          if (confirm(`Clear all MindCache data for ${this.domain}?`)) {
+            // Clear highlights
+            const highlights = JSON.parse(
+              localStorage.getItem("mindcache-highlights") || "[]"
+            );
+            const filteredHighlights = highlights.filter(
+              (h) => h.domain !== this.domain
+            );
+            localStorage.setItem(
+              "mindcache-highlights",
+              JSON.stringify(filteredHighlights)
+            );
+
+            // Clear notes
+            const notes = JSON.parse(
+              localStorage.getItem("mindcache-notes") || "[]"
+            );
+            const filteredNotes = notes.filter((n) => n.domain !== this.domain);
+            localStorage.setItem(
+              "mindcache-notes",
+              JSON.stringify(filteredNotes)
+            );
+
+            // Clear quotes
+            const quotes = JSON.parse(
+              localStorage.getItem("mindcache-quotes") || "[]"
+            );
+            const filteredQuotes = quotes.filter(
+              (q) => q.domain !== this.domain
+            );
+            localStorage.setItem(
+              "mindcache-quotes",
+              JSON.stringify(filteredQuotes)
+            );
+
+            // Clear activity data
+            localStorage.removeItem(`mindcache-activity-${this.domain}`);
+
+            // Update display
+            this.updateCounts();
+
+            // Remove existing highlights from page
+            document
+              .querySelectorAll(".mindcache-highlighted-text")
+              .forEach((el) => {
+                el.classList.remove("mindcache-highlighted-text");
+                el.style.backgroundColor = "";
+              });
+          }
         }
 
         showBriefly() {
@@ -1345,7 +1402,8 @@
       window.MindCacheActivityTracker = new MindCacheActivityTracker();
     }
 
-    // Site Activity Tracker (Legacy support)
+    // Site Activity Tracker (DISABLED - Using FloatingIndicator instead)
+    /*
     if (!window.MindCacheSiteTracker) {
       class MindCacheSiteTracker {
         constructor() {
@@ -2008,6 +2066,7 @@
 
       window.MindCacheSiteTracker = new MindCacheSiteTracker();
     }
+    */
 
     // Initialize data sync
     DataSyncManager.updateExtensionCounts();

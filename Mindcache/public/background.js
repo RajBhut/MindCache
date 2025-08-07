@@ -37,6 +37,11 @@ class MindCacheBackground {
   async handleMessage(message, sender, sendResponse) {
     try {
       switch (message.type) {
+        case "user_interaction":
+          await this.handleUserInteraction(message, sender);
+          sendResponse({ success: true });
+          break;
+
         case "updateCounts":
           await this.updateBadge(message.data);
           sendResponse({ success: true });
@@ -185,6 +190,73 @@ class MindCacheBackground {
     } catch (error) {
       console.error("Error exporting data:", error);
       throw error;
+    }
+  }
+
+  async handleUserInteraction(message, sender) {
+    try {
+      // Send interaction data to backend for AI analysis
+      const interactionData = {
+        session_id: sender.tab?.id || "unknown",
+        action_type: message.action,
+        url: message.data.url,
+        title: message.data.title,
+        content_summary: this.generateContentSummary(message.data),
+        interaction_data: JSON.stringify(message.data),
+        timestamp: new Date().toISOString(),
+      };
+
+      // Try to send to backend
+      try {
+        const response = await fetch("http://localhost:5000/api/interactions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(interactionData),
+        });
+
+        if (response.ok) {
+          console.log("Interaction data sent to backend successfully");
+        } else {
+          console.log("Backend unavailable, storing locally");
+          this.storeInteractionLocally(interactionData);
+        }
+      } catch (error) {
+        console.log("Backend not reachable, storing locally");
+        this.storeInteractionLocally(interactionData);
+      }
+    } catch (error) {
+      console.error("Error handling user interaction:", error);
+    }
+  }
+
+  generateContentSummary(data) {
+    if (data.contentSummary) {
+      return (
+        data.contentSummary.contentPreview ||
+        data.contentSummary.title ||
+        "User interaction"
+      );
+    }
+    return data.selectedText || data.visibleContent || "User interaction";
+  }
+
+  async storeInteractionLocally(interactionData) {
+    try {
+      const result = await chrome.storage.local.get(["interaction_history"]);
+      const history = result.interaction_history || [];
+
+      history.push(interactionData);
+
+      // Keep only last 100 interactions
+      if (history.length > 100) {
+        history.splice(0, history.length - 100);
+      }
+
+      await chrome.storage.local.set({ interaction_history: history });
+    } catch (error) {
+      console.error("Error storing interaction locally:", error);
     }
   }
 

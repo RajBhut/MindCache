@@ -14,6 +14,7 @@ import {
   BarChart3,
   PieChart,
   Activity,
+  Star,
 } from "lucide-react";
 
 const AIAnalyticsDashboard = () => {
@@ -25,12 +26,45 @@ const AIAnalyticsDashboard = () => {
     generateAnalytics();
   }, [interactions, highlights, notes, quotes]);
 
-  const generateAnalytics = () => {
+  const fetchAnalyticsFromAPI = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/analytics");
+      if (response.ok) {
+        const data = await response.json();
+        return data;
+      } else {
+        console.warn("Failed to fetch analytics from API, using local data");
+        return null;
+      }
+    } catch (error) {
+      console.warn("API not available, using local data:", error);
+      return null;
+    }
+  };
+
+  const generateAnalytics = async () => {
     setIsLoading(true);
 
     try {
+      // First try to get analytics from backend API
+      const apiAnalytics = await fetchAnalyticsFromAPI();
+
+      if (apiAnalytics) {
+        setAnalytics(apiAnalytics);
+        setIsLoading(false);
+        return;
+      }
+
+      // Fallback to local analysis
       const stats = getStats();
       const allItems = [...highlights, ...notes, ...quotes];
+
+      // If no data exists, generate sample analytics for demo
+      if (interactions.length === 0 && allItems.length === 0) {
+        setAnalytics(generateSampleAnalytics());
+        setIsLoading(false);
+        return;
+      }
 
       // Reading patterns analysis
       const readingPatterns = analyzeReadingPatterns(interactions);
@@ -75,16 +109,26 @@ const AIAnalyticsDashboard = () => {
     // Group interactions by session (domain + day)
     const sessions = {};
     interactions.forEach((interaction) => {
-      const date = new Date(interaction.timestamp).toDateString();
-      const domain = interaction.data.url
-        ? new URL(interaction.data.url).hostname
-        : "unknown";
-      const sessionKey = `${domain}-${date}`;
+      try {
+        if (
+          !interaction.timestamp ||
+          isNaN(new Date(interaction.timestamp).getTime())
+        ) {
+          return; // Skip invalid timestamps
+        }
+        const date = new Date(interaction.timestamp).toDateString();
+        const domain = interaction.data.url
+          ? new URL(interaction.data.url).hostname
+          : "unknown";
+        const sessionKey = `${domain}-${date}`;
 
-      if (!sessions[sessionKey]) {
-        sessions[sessionKey] = [];
+        if (!sessions[sessionKey]) {
+          sessions[sessionKey] = [];
+        }
+        sessions[sessionKey].push(interaction);
+      } catch (error) {
+        console.warn("Error processing interaction timestamp:", error);
       }
-      sessions[sessionKey].push(interaction);
     });
 
     patterns.totalSessions = Object.keys(sessions).length;
@@ -102,8 +146,21 @@ const AIAnalyticsDashboard = () => {
     // Analyze active hours
     const hourCounts = {};
     interactions.forEach((interaction) => {
-      const hour = new Date(interaction.timestamp).getHours();
-      hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+      try {
+        if (
+          !interaction.timestamp ||
+          isNaN(new Date(interaction.timestamp).getTime())
+        ) {
+          return; // Skip invalid timestamps
+        }
+        const hour = new Date(interaction.timestamp).getHours();
+        hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+      } catch (error) {
+        console.warn(
+          "Error processing interaction timestamp for hours:",
+          error
+        );
+      }
     });
     patterns.mostActiveHours = hourCounts;
 
@@ -169,8 +226,17 @@ const AIAnalyticsDashboard = () => {
     // Daily activity
     const dailyCounts = {};
     allActivities.forEach((activity) => {
-      const date = new Date(activity.timestamp).toDateString();
-      dailyCounts[date] = (dailyCounts[date] || 0) + 1;
+      try {
+        if (
+          activity.timestamp &&
+          !isNaN(new Date(activity.timestamp).getTime())
+        ) {
+          const date = new Date(activity.timestamp).toDateString();
+          dailyCounts[date] = (dailyCounts[date] || 0) + 1;
+        }
+      } catch (error) {
+        console.warn("Invalid timestamp in activity:", activity.timestamp);
+      }
     });
     patterns.dailyActivity = dailyCounts;
 
@@ -186,16 +252,34 @@ const AIAnalyticsDashboard = () => {
     ];
     const weeklyCounts = {};
     allActivities.forEach((activity) => {
-      const day = weekdays[new Date(activity.timestamp).getDay()];
-      weeklyCounts[day] = (weeklyCounts[day] || 0) + 1;
+      try {
+        if (
+          activity.timestamp &&
+          !isNaN(new Date(activity.timestamp).getTime())
+        ) {
+          const day = weekdays[new Date(activity.timestamp).getDay()];
+          weeklyCounts[day] = (weeklyCounts[day] || 0) + 1;
+        }
+      } catch (error) {
+        console.warn("Invalid timestamp in activity:", activity.timestamp);
+      }
     });
     patterns.weeklyTrends = weeklyCounts;
 
     // Peak hours
     const hourCounts = {};
     allActivities.forEach((activity) => {
-      const hour = new Date(activity.timestamp).getHours();
-      hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+      try {
+        if (
+          activity.timestamp &&
+          !isNaN(new Date(activity.timestamp).getTime())
+        ) {
+          const hour = new Date(activity.timestamp).getHours();
+          hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+        }
+      } catch (error) {
+        console.warn("Invalid timestamp in activity:", activity.timestamp);
+      }
     });
 
     const peakHours = Object.entries(hourCounts)
@@ -282,6 +366,101 @@ const AIAnalyticsDashboard = () => {
     return metrics;
   };
 
+  const generateSampleAnalytics = () => {
+    const now = new Date();
+    return {
+      readingPatterns: {
+        avgSessionTime: 15.5,
+        totalSessions: 12,
+        clickPatterns: {
+          article: 8,
+          button: 5,
+          link: 12,
+          p: 15,
+        },
+        scrollBehavior: {
+          totalDistance: 24567,
+          avgScrollSpeed: 350,
+        },
+        mostActiveHours: {
+          14: 8,
+          10: 6,
+          16: 5,
+        },
+      },
+      contentAnalysis: {
+        topTopics: {
+          technology: 15,
+          productivity: 12,
+          learning: 8,
+          development: 7,
+          programming: 6,
+          javascript: 5,
+          tutorial: 4,
+          guide: 3,
+        },
+        totalWords: 12500,
+        avgContentLength: 180,
+        contentTypes: {
+          highlight: 25,
+          note: 18,
+          quote: 12,
+        },
+        readingLevel: "Advanced",
+        averageComplexity: 0.75,
+        sentimentDistribution: {
+          positive: 45,
+          neutral: 40,
+          negative: 15,
+        },
+      },
+      timePatterns: {
+        peakHours: [
+          { hour: 14, count: 8 },
+          { hour: 10, count: 6 },
+          { hour: 16, count: 5 },
+        ],
+        weeklyTrends: {
+          Monday: 12,
+          Tuesday: 8,
+          Wednesday: 15,
+          Thursday: 10,
+          Friday: 7,
+          Saturday: 3,
+          Sunday: 5,
+        },
+        dailyActivity: {},
+        monthlyGrowth: {},
+      },
+      domainInsights: {
+        topDomains: {
+          "github.com": 8,
+          "stackoverflow.com": 6,
+          "medium.com": 4,
+          "dev.to": 3,
+        },
+        domainEngagement: {
+          "github.com": 12,
+          "stackoverflow.com": 8,
+          "medium.com": 6,
+          "dev.to": 4,
+        },
+        crossDomainPatterns: {},
+      },
+      engagement: {
+        totalSessions: 12,
+        avgSessionTime: 15.5,
+        noteCreationRate: 25,
+        focusTime: 45,
+        engagementScore: 78,
+        engagementRate: 67,
+        qualityScore: 82,
+        retentionRate: 75,
+      },
+      generatedAt: new Date().toISOString(),
+    };
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -310,7 +489,10 @@ const AIAnalyticsDashboard = () => {
         </h2>
         <p className="text-sm text-gray-600">
           Generated{" "}
-          {format(new Date(analytics.generatedAt), "MMM d, yyyy 'at' HH:mm")}
+          {analytics.generatedAt &&
+          !isNaN(new Date(analytics.generatedAt).getTime())
+            ? format(new Date(analytics.generatedAt), "MMM d, yyyy 'at' HH:mm")
+            : format(new Date(), "MMM d, yyyy 'at' HH:mm")}
         </p>
       </div>
 
@@ -344,7 +526,7 @@ const AIAnalyticsDashboard = () => {
 
       {/* Content Analysis */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-white p-6 rounded-lg shadow overflow-hidden">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <BookOpen className="w-5 h-5" />
             Content Analysis
@@ -394,21 +576,24 @@ const AIAnalyticsDashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-white p-6 rounded-lg shadow overflow-hidden">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
             Top Topics
           </h3>
 
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-80 overflow-y-auto">
             {Object.entries(analytics.contentAnalysis.topTopics)
               .slice(0, 8)
               .map(([topic, count]) => (
                 <div key={topic} className="flex justify-between items-center">
-                  <span className="text-sm text-gray-700 capitalize">
+                  <span
+                    className="text-sm text-gray-700 capitalize truncate max-w-[120px]"
+                    title={topic}
+                  >
                     {topic}
                   </span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
                     <div className="w-16 bg-gray-200 rounded-full h-2">
                       <div
                         className="bg-blue-600 h-2 rounded-full"
@@ -425,7 +610,9 @@ const AIAnalyticsDashboard = () => {
                         }}
                       />
                     </div>
-                    <span className="text-xs text-gray-500 w-6">{count}</span>
+                    <span className="text-xs text-gray-500 w-6 text-right">
+                      {count}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -434,7 +621,7 @@ const AIAnalyticsDashboard = () => {
       </div>
 
       {/* Time Patterns */}
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow overflow-hidden">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <Clock className="w-5 h-5" />
           Activity Patterns
@@ -445,13 +632,13 @@ const AIAnalyticsDashboard = () => {
             <h4 className="text-sm font-medium text-gray-700 mb-3">
               Peak Hours
             </h4>
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-32 overflow-y-auto">
               {analytics.timePatterns.peakHours.map((peak, index) => (
                 <div key={index} className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-gray-600 truncate">
                     {peak.hour}:00 - {peak.hour + 1}:00
                   </span>
-                  <span className="text-sm font-medium">
+                  <span className="text-sm font-medium whitespace-nowrap ml-2">
                     {peak.count} activities
                   </span>
                 </div>
@@ -463,14 +650,18 @@ const AIAnalyticsDashboard = () => {
             <h4 className="text-sm font-medium text-gray-700 mb-3">
               Weekly Trends
             </h4>
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-32 overflow-y-auto">
               {Object.entries(analytics.timePatterns.weeklyTrends)
                 .sort(([, a], [, b]) => b - a)
                 .slice(0, 3)
                 .map(([day, count]) => (
                   <div key={day} className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">{day}</span>
-                    <span className="text-sm font-medium">{count}</span>
+                    <span className="text-sm text-gray-600 truncate">
+                      {day}
+                    </span>
+                    <span className="text-sm font-medium whitespace-nowrap ml-2">
+                      {count}
+                    </span>
                   </div>
                 ))}
             </div>
@@ -480,7 +671,7 @@ const AIAnalyticsDashboard = () => {
             <h4 className="text-sm font-medium text-gray-700 mb-3">
               Domain Engagement
             </h4>
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-32 overflow-y-auto">
               {Object.entries(analytics.domainInsights.domainEngagement)
                 .sort(([, a], [, b]) => b - a)
                 .slice(0, 3)
@@ -489,10 +680,15 @@ const AIAnalyticsDashboard = () => {
                     key={domain}
                     className="flex justify-between items-center"
                   >
-                    <span className="text-sm text-gray-600 truncate">
+                    <span
+                      className="text-sm text-gray-600 truncate max-w-[120px]"
+                      title={domain}
+                    >
                       {domain}
                     </span>
-                    <span className="text-sm font-medium">{count}</span>
+                    <span className="text-sm font-medium whitespace-nowrap ml-2">
+                      {count}
+                    </span>
                   </div>
                 ))}
             </div>
@@ -512,13 +708,15 @@ const MetricCard = ({ title, value, icon, color }) => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
+    <div className="bg-white p-6 rounded-lg shadow overflow-hidden">
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-gray-600 truncate">{title}</p>
+          <p className="text-2xl font-bold text-gray-900 truncate">{value}</p>
         </div>
-        <div className={`p-3 rounded-lg ${colorClasses[color]} text-white`}>
+        <div
+          className={`p-3 rounded-lg ${colorClasses[color]} text-white flex-shrink-0 ml-4`}
+        >
           {icon}
         </div>
       </div>

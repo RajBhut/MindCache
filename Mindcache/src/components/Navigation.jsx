@@ -18,7 +18,7 @@ const Navigation = () => {
     { to: "/html-scraper", label: "Scraper", icon: Globe },
     { to: "/collections", label: "Collections", icon: Zap },
     { to: "/analytics", label: "Analytics", icon: TrendingUp },
-    { to: "/interactions", label: "Activity", icon: List },
+    { to: "/activity", label: "Activity", icon: List },
     { to: "/ai-insights", label: "AI Insights", icon: Brain },
     { to: "/settings", label: "Settings", icon: Settings },
   ];
