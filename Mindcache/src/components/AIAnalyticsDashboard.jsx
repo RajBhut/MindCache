@@ -21,6 +21,7 @@ const AIAnalyticsDashboard = () => {
   const { interactions, highlights, notes, quotes, getStats } = useStore();
   const [analytics, setAnalytics] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [dataSource, setDataSource] = useState("unknown");
 
   useEffect(() => {
     generateAnalytics();
@@ -28,16 +29,34 @@ const AIAnalyticsDashboard = () => {
 
   const fetchAnalyticsFromAPI = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/analytics");
+      console.log("🔄 Attempting to fetch analytics from API...");
+      const response = await fetch("http://localhost:5000/api/analytics", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      console.log("📡 API Response status:", response.status);
+      console.log("📡 API Response headers:", response.headers);
+
       if (response.ok) {
         const data = await response.json();
+        console.log("✅ Successfully fetched analytics data from API:", data);
+        console.log("📊 Data structure:", Object.keys(data));
         return data;
       } else {
-        console.warn("Failed to fetch analytics from API, using local data");
+        const errorText = await response.text();
+        console.warn(
+          "⚠️ Failed to fetch analytics from API, status:",
+          response.status,
+          "Error:",
+          errorText
+        );
         return null;
       }
     } catch (error) {
-      console.warn("API not available, using local data:", error);
+      console.warn("❌ API not available, using local data:", error);
+      console.warn("❌ Error details:", error.message, error.stack);
       return null;
     }
   };
@@ -46,25 +65,129 @@ const AIAnalyticsDashboard = () => {
     setIsLoading(true);
 
     try {
+      console.log("🚀 Starting analytics generation...");
+
       // First try to get analytics from backend API
       const apiAnalytics = await fetchAnalyticsFromAPI();
 
       if (apiAnalytics) {
+        console.log("✅ Using API analytics data");
         setAnalytics(apiAnalytics);
+        setDataSource("api");
         setIsLoading(false);
         return;
       }
+
+      console.log("⚠️ Falling back to local analytics generation");
+      setDataSource("local");
 
       // Fallback to local analysis
       const stats = getStats();
       const allItems = [...highlights, ...notes, ...quotes];
 
+      console.log("📊 Available local data:", {
+        interactions: interactions.length,
+        highlights: highlights.length,
+        notes: notes.length,
+        quotes: quotes.length,
+        stats,
+      });
+
+      // Try to get additional data from Chrome storage
+      let chromeStorageData = null;
+      try {
+        if (typeof chrome !== "undefined" && chrome.storage) {
+          const result = await chrome.storage.local.get([
+            "interactions",
+            "highlights",
+            "notes",
+            "quotes",
+          ]);
+          chromeStorageData = result;
+          console.log("📊 Chrome storage data:", chromeStorageData);
+
+          // Merge Chrome storage data with Zustand data
+          const allInteractions = [
+            ...interactions,
+            ...(chromeStorageData.interactions || []),
+          ];
+          const allHighlights = [
+            ...highlights,
+            ...(chromeStorageData.highlights || []),
+          ];
+          const allNotes = [...notes, ...(chromeStorageData.notes || [])];
+          const allQuotes = [...quotes, ...(chromeStorageData.quotes || [])];
+
+          console.log("📊 Merged data totals:", {
+            interactions: allInteractions.length,
+            highlights: allHighlights.length,
+            notes: allNotes.length,
+            quotes: allQuotes.length,
+          });
+
+          // If we have significant data, use it instead of sample data
+          if (
+            allInteractions.length > 0 ||
+            allHighlights.length > 0 ||
+            allNotes.length > 0 ||
+            allQuotes.length > 0
+          ) {
+            const readingPatterns = analyzeReadingPatterns(allInteractions);
+            const contentAnalysis = analyzeContent([
+              ...allHighlights,
+              ...allNotes,
+              ...allQuotes,
+            ]);
+            const timePatterns = analyzeTimePatterns([
+              ...allInteractions,
+              ...allHighlights,
+              ...allNotes,
+              ...allQuotes,
+            ]);
+            const domainInsights = analyzeDomains(allInteractions, [
+              ...allHighlights,
+              ...allNotes,
+              ...allQuotes,
+            ]);
+            const engagement = analyzeEngagement(allInteractions, [
+              ...allHighlights,
+              ...allNotes,
+              ...allQuotes,
+            ]);
+
+            setAnalytics({
+              overview: stats,
+              readingPatterns,
+              contentAnalysis,
+              timePatterns,
+              domainInsights,
+              engagement,
+              generatedAt: new Date().toISOString(),
+            });
+            setDataSource("local");
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch (storageError) {
+        console.warn("Chrome storage access failed:", storageError);
+      }
+
       // If no data exists, generate sample analytics for demo
       if (interactions.length === 0 && allItems.length === 0) {
+        console.log("📊 Using sample analytics (no local data)");
         setAnalytics(generateSampleAnalytics());
+        setDataSource("sample");
         setIsLoading(false);
         return;
       }
+
+      console.log("📊 Generating analytics from local data:", {
+        interactions: interactions.length,
+        highlights: highlights.length,
+        notes: notes.length,
+        quotes: quotes.length,
+      });
 
       // Reading patterns analysis
       const readingPatterns = analyzeReadingPatterns(interactions);
@@ -90,8 +213,12 @@ const AIAnalyticsDashboard = () => {
         engagement,
         generatedAt: new Date().toISOString(),
       });
+      setDataSource("local");
     } catch (error) {
       console.error("Error generating analytics:", error);
+      // Fallback to sample data on error
+      setAnalytics(generateSampleAnalytics());
+      setDataSource("sample");
     } finally {
       setIsLoading(false);
     }
@@ -487,13 +614,134 @@ const AIAnalyticsDashboard = () => {
           <Brain className="w-5 h-5" />
           AI Analytics Dashboard
         </h2>
-        <p className="text-sm text-gray-600">
-          Generated{" "}
-          {analytics.generatedAt &&
-          !isNaN(new Date(analytics.generatedAt).getTime())
-            ? format(new Date(analytics.generatedAt), "MMM d, yyyy 'at' HH:mm")
-            : format(new Date(), "MMM d, yyyy 'at' HH:mm")}
-        </p>
+        <div className="flex justify-between items-center">
+          <p className="text-sm text-gray-600">
+            Generated{" "}
+            {analytics.generatedAt &&
+            !isNaN(new Date(analytics.generatedAt).getTime())
+              ? format(
+                  new Date(analytics.generatedAt),
+                  "MMM d, yyyy 'at' HH:mm"
+                )
+              : format(new Date(), "MMM d, yyyy 'at' HH:mm")}{" "}
+            <span
+              className={`ml-2 px-2 py-1 text-xs rounded ${
+                dataSource === "api"
+                  ? "bg-green-100 text-green-800"
+                  : dataSource === "local"
+                  ? "bg-yellow-100 text-yellow-800"
+                  : dataSource === "imported"
+                  ? "bg-blue-100 text-blue-800"
+                  : "bg-gray-100 text-gray-800"
+              }`}
+            >
+              {dataSource === "api"
+                ? "🌐 Live API"
+                : dataSource === "local"
+                ? "💾 Local Data"
+                : dataSource === "imported"
+                ? "📁 Imported Data"
+                : "📊 Sample Data"}
+            </span>
+          </p>
+          <button
+            onClick={async () => {
+              console.log("🧪 Manual API test triggered");
+              const testData = await fetchAnalyticsFromAPI();
+              if (testData) {
+                alert("✅ API Connected! Check console for details.");
+              } else {
+                alert("❌ API Connection Failed! Using sample data.");
+              }
+            }}
+            className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 mr-2"
+          >
+            Test API
+          </button>
+          <button
+            onClick={() => {
+              // Force refresh analytics
+              generateAnalytics();
+            }}
+            className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 mr-2"
+          >
+            Refresh Data
+          </button>
+          <label className="px-3 py-1 text-xs bg-purple-500 text-white rounded hover:bg-purple-600 cursor-pointer">
+            Import Data
+            <input
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  try {
+                    const text = await file.text();
+                    const data = JSON.parse(text);
+                    console.log("📥 Imported data:", data);
+
+                    // Process imported data and convert to analytics
+                    if (data.pages && Array.isArray(data.pages)) {
+                      const processedInteractions = data.pages.map(
+                        (page, index) => ({
+                          id: page.id || index,
+                          type: "imported_interaction",
+                          data: {
+                            url: page.url,
+                            title: page.title,
+                            domain: page.domain,
+                            content: page.data?.content,
+                          },
+                          timestamp: page.timestamp || new Date().toISOString(),
+                        })
+                      );
+
+                      // Analyze imported data
+                      const readingPatterns = analyzeReadingPatterns(
+                        processedInteractions
+                      );
+                      const contentAnalysis = analyzeContent([]);
+                      const timePatterns = analyzeTimePatterns(
+                        processedInteractions
+                      );
+                      const domainInsights = analyzeDomains(
+                        processedInteractions,
+                        []
+                      );
+                      const engagement = analyzeEngagement(
+                        processedInteractions,
+                        []
+                      );
+
+                      setAnalytics({
+                        readingPatterns,
+                        contentAnalysis,
+                        timePatterns,
+                        domainInsights,
+                        engagement,
+                        generatedAt: new Date().toISOString(),
+                      });
+                      setDataSource("imported");
+                      alert(
+                        `✅ Successfully imported ${data.pages.length} pages of data!`
+                      );
+                    } else {
+                      alert(
+                        "❌ Invalid data format. Expected JSON with 'pages' array."
+                      );
+                    }
+                  } catch (error) {
+                    console.error("Import error:", error);
+                    alert(
+                      "❌ Failed to import data. Please check the file format."
+                    );
+                  }
+                }
+              }}
+            />
+          </label>
+        </div>
       </div>
 
       {/* Overview Cards */}
